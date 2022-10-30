@@ -1,5 +1,6 @@
 # pylint: disable=missing-function-docstring, missing-class-docstring, missing-module-docstring
 
+from time import strptime
 import requests
 from bs4 import BeautifulSoup
 
@@ -112,3 +113,7 @@ async def parse(xml: str) -> Feed:
             raw.find_all("item")
         )
     )
+
+def timeparse(time: str):
+    # Example: Wed, 05 Oct 2022 17:08:00 GMT
+    return strptime(time, "%a, %d %b %Y %H:%M:%S GMT")
