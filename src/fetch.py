@@ -62,7 +62,7 @@ class Item():
             "pub_date": self.pub_date
         }
 
-    def to_string(self):
+    def to_str(self):
         return str(self.to_dict())
 
 
@@ -77,18 +77,38 @@ class Feed():
 
     def to_dict(self):
         return {
-            "channel": self.channel,
+            "channel": self.channel.to_dict(),
             "items": [item.to_dict() for item in self.items]
         }
 
-    def to_string(self):
+    def to_str(self):
         return str(self.to_dict())
 
 
-class Provider():
-    async def fetch_stream(self, url: str):
-        return requests.get(url, timeout=300)
+async def fetch_stream(url: str, timeout=300):
+    return requests.get(url, timeout)
 
-    async def parse(self, xml: str) -> Feed:
-        raw = BeautifulSoup(xml, 'lxml-xml')
 
+async def parse(xml: str) -> Feed:
+    raw = BeautifulSoup(xml, 'lxml-xml')
+    return Feed(
+        Channel(
+            raw.find("title").text,
+            raw.find("description").text,
+            raw.find("lastBuildDate").text,
+            raw.find("link").text,
+            raw.find("atom:link")["href"]
+        ),
+        map(
+            lambda item: Item(
+                item.find("title").text,
+                item.find("description").text,
+                item.find("link").text,
+                item.find("guid").text,
+                [j.text for j in item.find_all("category")],
+                item.find("dc:creator").text,
+                item.find("pubDate").text
+            ),
+            raw.find_all("item")
+        )
+    )
