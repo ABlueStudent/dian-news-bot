@@ -7,6 +7,7 @@ class DBControl():
     def __init__(self, db_path: str):
         self.connect = sqlite3.connect(db_path)
         self.cursor = self.connect.cursor()
+        self.init_table()
 
     async def list_tables(self):
         return self.cursor.execute(
@@ -41,11 +42,24 @@ class DBControl():
             (guild, channel, feed)
         )
 
-    async def list_subscribe(self, guild, channel, feed):
-        return self.cursor.execute(
-            "SELECT * FROM discord WHERE guild=? AND channel=? AND feed=?;",
-            (guild, channel, feed)
-        )
+    async def list_subscribe(self, guild=None, channel=None, feed=None):
+        if not (guild is None and channel is None and feed is None):
+            return self.cursor.execute(
+                "SELECT * FROM discord WHERE guild=? AND channel=? AND feed=?;",
+                (guild, channel, feed)
+            )
+        if not (guild is None and channel is None):
+            return self.cursor.execute(
+                "SELECT * FROM discord WHERE guild=? AND channel=?;",
+                (guild, channel)
+            )
+        if not (guild is None):
+            return self.cursor.execute(
+                "SELECT * FROM discord WHERE guild=?;",
+                (guild)
+            )
+
+        return self.cursor.execute("SELECT * FROM discord;")
 
     async def get_feed_cache(self, feed):
         self.cursor.execute(
