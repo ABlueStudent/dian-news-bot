@@ -19,13 +19,25 @@ class DBControl():
 
     async def init_table(self):
         self.cursor.execute(
-            "CREATE TABLE IF NOT EXISTS discord (id INTEGER PRIMARY KEY ASC, guild TEXT NOT NULL, channel TEXT NOT NULL, feed TEXT NOT NULL);"
+            """
+            CREATE TABLE IF NOT EXISTS feeds (
+                feed TEXT PRIMARY KEY NOT NULL,
+                title TEXT,
+                time TEXT,
+                url TEXT
+            ) WITHOUT ROWID;
+            """
         )
         self.cursor.execute(
-            "CREATE UNIQUE INDEX IF NOT EXISTS sub ON discord(guild, channel, feed);"
-        )
-        self.cursor.execute(
-            "CREATE TABLE IF NOT EXISTS feeds (feed TEXT PRIMARY KEY NOT NULL, title TEXT, time TEXT, url TEXT) WITHOUT ROWID;"
+            """
+            CREATE TABLE IF NOT EXISTS discord (
+                id INTEGER PRIMARY KEY ASC,
+                guild TEXT NOT NULL,
+                channel TEXT NOT NULL,
+                feed TEXT NOT NULL,
+                UNIQUE (guild, channel, feed),
+            );
+            """
         )
 
     async def add_subscribe(self, guild, channel, feed):
