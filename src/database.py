@@ -22,7 +22,7 @@ class DBControl():
             "CREATE TABLE IF NOT EXISTS discord (id INTEGER PRIMARY KEY ASC, guild TEXT NOT NULL, channel TEXT NOT NULL, feed TEXT NOT NULL);"
         )
         self.cursor.execute(
-            "CREATE UNIQUE IF NOT EXISTS INDEX sub ON discord(guild, channel, feed);"
+            "CREATE UNIQUE INDEX IF NOT EXISTS sub ON discord(guild, channel, feed);"
         )
         self.cursor.execute(
             "CREATE TABLE IF NOT EXISTS feeds (feed TEXT PRIMARY KEY NOT NULL, title TEXT, time TEXT, url TEXT) WITHOUT ROWID;"

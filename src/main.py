@@ -1,6 +1,7 @@
 # pylint: disable=missing-function-docstring, missing-class-docstring, missing-module-docstring
 
 import discord
+import provider
 from database import DBControl
 
 TOKEN = ""
@@ -61,8 +62,15 @@ async def rss(interaction: discord.Interaction):
 )
 async def sub(interaction: discord.Interaction, rss_url: str):
     """新訂閱"""
-    await db.add_subscribe(interaction.guild_id, interaction.channel_id, rss_url)
-    await interaction.response.send_message(f"{rss_url} 訂閱成功")
+    feed = await provider.parse(
+        await provider.fetch(rss_url)
+    )
+
+    if not (feed.channel.atom_link == "" or feed.channel.title == ""):
+        await db.add_subscribe(interaction.guild_id, interaction.channel_id, rss_url)
+        await interaction.response.send_message(f"《{feed.channel.title}》{rss_url} 訂閱成功")
+    else:
+        await interaction.response.send_message(f"{rss_url} 訂閱失敗")
 
 
 @client.tree.command()
