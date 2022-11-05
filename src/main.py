@@ -1,9 +1,11 @@
 # pylint: disable=missing-function-docstring, missing-class-docstring, missing-module-docstring
 
 import discord
+from database import DBControl
 
 TOKEN = ""
 GUILDs = []
+db = DBControl(":memory:")
 
 with open("./config", "r", encoding="utf-8") as file:
     for line in file.readlines():
@@ -35,6 +37,7 @@ client = CustomBot(intents=custom_intents)
 @client.event
 async def on_ready():
     print(f'Logged in as {client.user} (ID: {client.user.id})')
+    await db.init_table()
 
 
 @client.event
@@ -46,7 +49,10 @@ async def on_message(msg: discord.Message):
 @client.tree.command()
 async def rss(interaction: discord.Interaction):
     """顯示已經訂閱的RSS列表"""
-    await interaction.response.send_message("已經訂閱的RSS列表")
+    subs = await db.list_subscribe(interaction.guild_id, interaction.channel_id)
+    await interaction.response.send_message(
+        "已經訂閱的RSS列表\n" + "\n".join(map(lambda elem: elem[3], subs))
+    )
 
 
 @client.tree.command()
@@ -55,6 +61,7 @@ async def rss(interaction: discord.Interaction):
 )
 async def sub(interaction: discord.Interaction, rss_url: str):
     """新訂閱"""
+    await db.add_subscribe(interaction.guild_id, interaction.channel_id, rss_url)
     await interaction.response.send_message(f"{rss_url} 訂閱成功")
 
 
@@ -64,6 +71,7 @@ async def sub(interaction: discord.Interaction, rss_url: str):
 )
 async def unsub(interaction: discord.Interaction, rss_url: str):
     """取消訂閱"""
+    await db.del_subscribe(interaction.guild_id, interaction.channel_id, rss_url)
     await interaction.response.send_message(f"{rss_url} 取消訂閱成功")
 
 
