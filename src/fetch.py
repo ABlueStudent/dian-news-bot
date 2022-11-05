@@ -86,7 +86,7 @@ class Feed():
         return str(self.to_dict())
 
 
-async def fetch_stream(url: str, timeout=300):
+async def fetch(url: str, timeout=300):
     return requests.get(url, timeout)
 
 
