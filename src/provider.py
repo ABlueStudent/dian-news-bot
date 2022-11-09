@@ -101,8 +101,8 @@ async def parse(xml: str) -> Feed:
             _parse(raw.find("link")),
             atom_link["href"] if not atom_link is None else ""
         ),
-        map(
-            lambda item: Item(
+        [
+            Item(
                 _parse(item.find("title")),
                 _parse(item.find("description")),
                 _parse(item.find("link")),
@@ -110,9 +110,9 @@ async def parse(xml: str) -> Feed:
                 [_parse(j) for j in item.find_all("category")],
                 _parse(item.find("dc:creator")),
                 _parse(item.find("pubDate"))
-            ),
-            raw.find_all("item")
-        )
+            )
+            for item in raw.find_all("item")
+        ]
     )
 
 def _parse(s):

@@ -35,7 +35,7 @@ class DBControl():
                 guild TEXT NOT NULL,
                 channel TEXT NOT NULL,
                 feed TEXT NOT NULL,
-                UNIQUE (guild, channel, feed),
+                UNIQUE (guild, channel, feed)
             );
             """
         )
@@ -68,7 +68,7 @@ class DBControl():
         if not (guild is None):
             return self.cursor.execute(
                 "SELECT * FROM discord WHERE guild=?;",
-                (guild)
+                (guild,)
             )
 
         return self.cursor.execute("SELECT * FROM discord;")
@@ -76,7 +76,7 @@ class DBControl():
     async def get_feed_cache(self, feed):
         self.cursor.execute(
             "SELECT * FROM feeds WHERE feed=?;",
-            (feed)
+            (feed,)
         )
 
     async def set_feed_cache(self, feed, title, time, url):

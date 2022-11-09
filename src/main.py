@@ -89,4 +89,33 @@ async def export(interaction: discord.Interaction):
     await interaction.response.send_message("TODO")
 
 
+async def pub_sub(guild, channel, title, link):
+    print(guild, channel, title, link)
+    await client.get_channel(channel).send(f"{title}\n{link}")
+
+
+async def update():
+    subs = await db.list_subscribe()
+    feeds = set(elem[3] for elem in subs.fetchall())
+
+    for feed in feeds:
+        content = await provider.parse(
+            await provider.fetch(feed)
+        )
+        cached = await db.get_feed_cache(feed)
+
+        if cached is None:
+            new = content.items[0]
+            await db.set_feed_cache(feed, new.title, new.pub_date, new.link)
+            for s in filter(lambda elem: elem[3] == feed, subs):
+                pub_sub(s[1], s[2], new.title, new.link)
+
+
+@client.tree.command()
+async def dup(interaction: discord.Interaction):
+    """手動update"""
+    await update()
+    await interaction.response.send_message("Ok")
+
+
 client.run(TOKEN)
