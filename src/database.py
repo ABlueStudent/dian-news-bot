@@ -74,7 +74,7 @@ class DBControl():
         return self.cursor.execute("SELECT * FROM discord;")
 
     async def get_feed_cache(self, feed):
-        self.cursor.execute(
+        return self.cursor.execute(
             "SELECT * FROM feeds WHERE feed=?;",
             (feed,)
         )
