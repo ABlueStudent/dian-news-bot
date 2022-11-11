@@ -118,7 +118,7 @@ async def export(interaction: discord.Interaction):
 async def dup(interaction: discord.Interaction):
     """手動update"""
     await interaction.response.send_message("Ok")
-    await client.update()
+    await client.news_update()
 
 
 client.run(TOKEN)
