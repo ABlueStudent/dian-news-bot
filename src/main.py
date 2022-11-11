@@ -2,6 +2,7 @@
 
 import discord
 import provider
+from discord.ext import tasks
 from database import DBControl
 
 TOKEN = ""
@@ -26,10 +27,32 @@ class CustomBot(discord.Client):
         self.tree = discord.app_commands.CommandTree(self)
 
     async def setup_hook(self) -> None:
+        self.news_update.start() # pylint: disable=no-member
         for guild in GUILDs:
             self.tree.copy_global_to(guild=guild)
             await self.tree.sync(guild=guild)
         return await super().setup_hook()
+
+    @tasks.loop(seconds=60)
+    async def news_update(self):
+        subs = (await db.list_subscribe()).fetchall()
+        feeds = set(elem[3] for elem in subs)
+
+        for feed in feeds:
+            content = await provider.parse(
+                await provider.fetch(feed)
+            )
+            cached = (await db.get_feed_cache(feed)).fetchone()
+            new = content.items[0]
+
+            if (cached is None) or (provider.timeparse(cached[2]) < provider.timeparse(new.pub_date)):
+                await db.set_feed_cache(feed, new.title, new.pub_date, new.link)
+                for s in filter(lambda elem: elem[3] == feed, subs):
+                    await client.get_channel(int(s[2])).send(f"**{new.title}**\n{new.link}")
+
+    @news_update.before_loop
+    async def update_before_loop(self):
+        await self.wait_until_ready()
 
 
 custom_intents = discord.Intents.default()
@@ -91,28 +114,11 @@ async def export(interaction: discord.Interaction):
     await interaction.response.send_message("TODO")
 
 
-async def update():
-    subs = (await db.list_subscribe()).fetchall()
-    feeds = set(elem[3] for elem in subs)
-
-    for feed in feeds:
-        content = await provider.parse(
-            await provider.fetch(feed)
-        )
-        cached = (await db.get_feed_cache(feed)).fetchone()
-        new = content.items[0]
-
-        if (cached is None) or (provider.timeparse(cached[2]) < provider.timeparse(new.pub_date)):
-            await db.set_feed_cache(feed, new.title, new.pub_date, new.link)
-            for s in filter(lambda elem: elem[3] == feed, subs):
-                await client.get_channel(eval(s[2])).send(f"**{new.title}**\n{new.link}")
-
-
 @client.tree.command()
 async def dup(interaction: discord.Interaction):
     """手動update"""
     await interaction.response.send_message("Ok")
-    await update()
+    await client.update()
 
 
 client.run(TOKEN)
