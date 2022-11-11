@@ -16,6 +16,8 @@ with open("./config", "r", encoding="utf-8") as file:
                 TOKEN = tmp[1]
             elif tmp[0] == "GUILD":
                 GUILDs.append(discord.Object(id=tmp[1]))
+            elif tmp[0] == "DBLOC":
+                db = DBControl(tmp[1])
 
 
 class CustomBot(discord.Client):
@@ -90,27 +92,27 @@ async def export(interaction: discord.Interaction):
 
 
 async def update():
-    subs = await db.list_subscribe()
-    feeds = set(elem[3] for elem in subs.fetchall())
+    subs = (await db.list_subscribe()).fetchall()
+    feeds = set(elem[3] for elem in subs)
 
     for feed in feeds:
         content = await provider.parse(
             await provider.fetch(feed)
         )
-        cached = await db.get_feed_cache(feed)
+        cached = (await db.get_feed_cache(feed)).fetchone()
+        new = content.items[0]
 
-        if cached is None:
-            new = content.items[0]
+        if (cached is None) or (provider.timeparse(cached[2]) < provider.timeparse(new.pub_date)):
             await db.set_feed_cache(feed, new.title, new.pub_date, new.link)
             for s in filter(lambda elem: elem[3] == feed, subs):
-                await client.get_channel(s[2]).send(f"{new.title}\n{new.link}")
+                await client.get_channel(eval(s[2])).send(f"**{new.title}**\n{new.link}")
 
 
 @client.tree.command()
 async def dup(interaction: discord.Interaction):
     """手動update"""
-    await update()
     await interaction.response.send_message("Ok")
+    await update()
 
 
 client.run(TOKEN)
