@@ -91,7 +91,7 @@ async def sub(interaction: discord.Interaction, rss_url: str):
         await provider.fetch(rss_url)
     )
 
-    if not (feed.channel.atom_link == "" or feed.channel.title == ""):
+    if await provider.is_rss(rss_url):
         await db.add_subscribe(interaction.guild_id, interaction.channel_id, rss_url)
         await interaction.response.send_message(f"《{feed.channel.title}》{rss_url} 訂閱成功")
     else:

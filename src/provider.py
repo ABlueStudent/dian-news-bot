@@ -118,6 +118,9 @@ async def parse(xml: str) -> Feed:
 def _parse(s):
     return s.text if not s is None else ""
 
+async def is_rss(url: str):
+    return len(BeautifulSoup(await fetch(url), 'lxml-xml').find_all("rss")) != 0
+
 def timeparse(time: str):
     if time.endswith("+0000"):
         # Example: Sat, 23 Apr 2022 20:04:56 +0000
