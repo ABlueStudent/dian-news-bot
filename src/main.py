@@ -11,14 +11,15 @@ db = DBControl(":memory:")
 
 with open("./config", "r", encoding="utf-8") as file:
     for line in file.readlines():
-        if line.strip() != "":
-            tmp = line.split("=")
-            if tmp[0] == "TOKEN":
-                TOKEN = tmp[1]
-            elif tmp[0] == "GUILD":
-                GUILDs.append(discord.Object(id=tmp[1]))
-            elif tmp[0] == "DBLOC":
-                db = DBControl(tmp[1])
+        striped = line.strip()
+        if striped != "":
+            splited = striped.split("=")
+            if splited[0] == "TOKEN":
+                TOKEN = splited[1]
+            elif splited[0] == "GUILD":
+                GUILDs.append(discord.Object(id=splited[1]))
+            elif splited[0] == "DBLOC":
+                db = DBControl(splited[1])
 
 
 class CustomBot(discord.Client):
@@ -39,9 +40,7 @@ class CustomBot(discord.Client):
         feeds = set(elem[3] for elem in subs)
 
         for feed in feeds:
-            content = await provider.parse(
-                await provider.fetch(feed)
-            )
+            content = await provider.get_rss(feed)
             cached = (await db.get_feed_cache(feed)).fetchone()
             new = content.items[0]
 

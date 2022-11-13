@@ -86,10 +86,21 @@ class Feed():
         return str(self.to_dict())
 
 
-async def fetch(url: str, timeout=300):
-    return requests.get(url, timeout=timeout, headers={
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36 Edg/107.0.1418.35"
-    }).text
+async def fetch(url: str, timeout=60):
+    headers = {
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36 Edg/107.0.1418.35",
+    }
+    response = requests.get(
+        url,
+        timeout=timeout,
+        headers=headers,
+        allow_redirects=True
+    )
+
+    if response.status_code in range(200, 300):
+        return response.text
+
+    return response.raise_for_status()
 
 
 async def parse(xml: str) -> Feed:
@@ -97,36 +108,47 @@ async def parse(xml: str) -> Feed:
     atom_link = raw.find("atom:link")
     return Feed(
         Channel(
-            _parse(raw.find("title")),
-            _parse(raw.find("description")),
-            _parse(raw.find("lastBuildDate")),
-            _parse(raw.find("link")),
+            _soup2text(raw.find("title")),
+            _soup2text(raw.find("description")),
+            _soup2text(raw.find("lastBuildDate")),
+            _soup2text(raw.find("link")),
             atom_link["href"] if not atom_link is None else ""
         ),
         [
             Item(
-                _parse(item.find("title")),
-                _parse(item.find("description")),
-                _parse(item.find("link")),
-                _parse(item.find("guid")),
-                [_parse(j) for j in item.find_all("category")],
-                _parse(item.find("dc:creator")),
-                _parse(item.find("pubDate"))
+                _soup2text(item.find("title")),
+                _soup2text(item.find("description")),
+                _soup2text(item.find("link")),
+                _soup2text(item.find("guid")),
+                [_soup2text(j) for j in item.find_all("category")],
+                _soup2text(item.find("dc:creator")),
+                _soup2text(item.find("pubDate"))
             )
             for item in raw.find_all("item")
         ]
     )
 
-def _parse(s):
-    return s.text if not s is None else ""
+
+def _soup2text(soup):
+    return soup.text if not soup is None else ""
+
 
 async def is_rss(url: str):
     return len(BeautifulSoup(await fetch(url), 'lxml-xml').find_all("rss")) != 0
+
+
+async def get_rss(url: str):
+    return await parse(
+        await fetch(url)
+    )
+
 
 def timeparse(time: str):
     if time.endswith("+0000"):
         # Example: Sat, 23 Apr 2022 20:04:56 +0000
         return strptime(time, "%a, %d %b %Y %H:%M:%S +0000")
-    elif time.endswith("GMT"):
+    if time.endswith("GMT"):
         # Example: Wed, 05 Oct 2022 17:08:00 GMT
         return strptime(time, "%a, %d %b %Y %H:%M:%S GMT")
+
+    return ""
