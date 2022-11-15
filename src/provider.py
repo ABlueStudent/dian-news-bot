@@ -1,5 +1,6 @@
 # pylint: disable=missing-function-docstring, missing-class-docstring, missing-module-docstring
 
+import asyncio
 from time import strptime
 import requests
 from bs4 import BeautifulSoup
@@ -86,7 +87,7 @@ class Feed():
         return str(self.to_dict())
 
 
-async def fetch(url: str, timeout=60):
+async def fetch(url: str, timeout=10):
     headers = {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36 Edg/107.0.1418.35",
     }
@@ -101,6 +102,10 @@ async def fetch(url: str, timeout=60):
         return response.text
 
     return response.raise_for_status()
+
+
+async def fetch_timeout(url: str, timeout=10):
+    return await asyncio.wait_for(fetch(url, timeout), timeout=10.0)
 
 
 async def parse(xml: str) -> Feed:
@@ -134,12 +139,12 @@ def _soup2text(soup):
 
 
 async def is_rss(url: str):
-    return len(BeautifulSoup(await fetch(url), 'lxml-xml').find_all("rss")) != 0
+    return len(BeautifulSoup(await fetch_timeout(url), 'lxml-xml').find_all("rss")) != 0
 
 
 async def get_rss(url: str):
     return await parse(
-        await fetch(url)
+        await fetch_timeout(url)
     )
 
 
