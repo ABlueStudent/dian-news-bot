@@ -28,7 +28,7 @@ class CustomBot(discord.Client):
         self.tree = discord.app_commands.CommandTree(self)
 
     async def setup_hook(self) -> None:
-        self.news_update.start() # pylint: disable=no-member
+        self.news_update.start()  # pylint: disable=no-member
         for guild in GUILDs:
             self.tree.copy_global_to(guild=guild)
             await self.tree.sync(guild=guild)
@@ -48,6 +48,8 @@ class CustomBot(discord.Client):
                 await db.set_feed_cache(feed, new.title, new.pub_date, new.link)
                 for s in filter(lambda elem: elem[3] == feed, subs):
                     await client.get_channel(int(s[2])).send(f"**{new.title}**\n{new.link}")
+
+                return
 
             for new in content.items[::-1]:
                 if (provider.timeparse(cached[2]) < provider.timeparse(new.pub_date)):
