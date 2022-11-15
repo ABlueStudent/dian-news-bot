@@ -43,8 +43,14 @@ class CustomBot(discord.Client):
             content = await provider.get_rss(feed)
             cached = (await db.get_feed_cache(feed)).fetchone()
 
+            if cached is None:
+                new = content.items[0]
+                await db.set_feed_cache(feed, new.title, new.pub_date, new.link)
+                for s in filter(lambda elem: elem[3] == feed, subs):
+                    await client.get_channel(int(s[2])).send(f"**{new.title}**\n{new.link}")
+
             for new in content.items[::-1]:
-                if (cached is None) or (provider.timeparse(cached[2]) < provider.timeparse(new.pub_date)):
+                if (provider.timeparse(cached[2]) < provider.timeparse(new.pub_date)):
                     await db.set_feed_cache(feed, new.title, new.pub_date, new.link)
                     for s in filter(lambda elem: elem[3] == feed, subs):
                         await client.get_channel(int(s[2])).send(f"**{new.title}**\n{new.link}")
