@@ -62,7 +62,6 @@ class CustomBot(discord.Client):
                     if (provider.timeparse(cached[2]) < provider.timeparse(new.pub_date)):
                         await db.set_feed_cache(feed, new.title, new.pub_date, new.link)
                     break
-                
 
     @news_update.before_loop
     async def update_before_loop(self):
@@ -101,11 +100,9 @@ async def rss(interaction: discord.Interaction):
 )
 async def sub(interaction: discord.Interaction, rss_url: str):
     """新訂閱"""
-    feed = await provider.parse(
-        await provider.fetch(rss_url)
-    )
 
     if await provider.is_rss(rss_url):
+        feed = await provider.get_rss(rss_url)
         await db.add_subscribe(interaction.guild_id, interaction.channel_id, rss_url)
         await interaction.response.send_message(f"《{feed.channel.title}》{rss_url} 訂閱成功")
     else:
