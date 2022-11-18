@@ -55,11 +55,11 @@ class CustomBot(discord.Client):
             while True:
                 try:
                     new = next(news)
-                    if (provider.timeparse(cached[2]) < provider.timeparse(new.published)):
+                    if provider.timeparse(cached[2]) < provider.timeparse(new.published):
                         for sub in filter(lambda elem: elem[3] == feed, subs):
                             await client.get_channel(int(sub[2])).send(f"**{new.title}**\n{new.link}")
                 except StopIteration:
-                    if (provider.timeparse(cached[2]) < provider.timeparse(new.published)):
+                    if provider.timeparse(cached[2]) < provider.timeparse(new.published):
                         await db.set_feed_cache(feed, new.title, new.published, new.link)
                     break
 
