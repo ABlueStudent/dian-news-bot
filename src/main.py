@@ -40,27 +40,27 @@ class CustomBot(discord.Client):
         feeds = set(elem[3] for elem in subs)
 
         for feed in feeds:
-            content = await provider.get_rss(feed)
+            content = await provider.fetch_timeout(feed)
             cached = (await db.get_feed_cache(feed)).fetchone()
 
             if cached is None:
-                new = content.items[0]
-                await db.set_feed_cache(feed, new.title, new.pub_date, new.link)
-                for s in filter(lambda elem: elem[3] == feed, subs):
-                    await client.get_channel(int(s[2])).send(f"**{new.title}**\n{new.link}")
+                new = content.entries[0]
+                await db.set_feed_cache(feed, new.title, new.published, new.link)
+                for sub in filter(lambda elem: elem[3] == feed, subs):
+                    await client.get_channel(int(sub[2])).send(f"**{new.title}**\n{new.link}")
 
                 return
 
-            news = iter(content.items[::-1])
+            news = iter(content.entries[::-1])
             while True:
                 try:
                     new = next(news)
-                    if (provider.timeparse(cached[2]) < provider.timeparse(new.pub_date)):
-                        for s in filter(lambda elem: elem[3] == feed, subs):
-                            await client.get_channel(int(s[2])).send(f"**{new.title}**\n{new.link}")
+                    if (provider.timeparse(cached[2]) < provider.timeparse(new.published)):
+                        for sub in filter(lambda elem: elem[3] == feed, subs):
+                            await client.get_channel(int(sub[2])).send(f"**{new.title}**\n{new.link}")
                 except StopIteration:
-                    if (provider.timeparse(cached[2]) < provider.timeparse(new.pub_date)):
-                        await db.set_feed_cache(feed, new.title, new.pub_date, new.link)
+                    if (provider.timeparse(cached[2]) < provider.timeparse(new.published)):
+                        await db.set_feed_cache(feed, new.title, new.published, new.link)
                     break
 
     @news_update.before_loop
@@ -100,12 +100,14 @@ async def rss(interaction: discord.Interaction):
 )
 async def sub(interaction: discord.Interaction, rss_url: str):
     """新訂閱"""
-
-    if await provider.is_rss(rss_url):
-        feed = await provider.get_rss(rss_url)
-        await db.add_subscribe(interaction.guild_id, interaction.channel_id, rss_url)
-        await interaction.response.send_message(f"《{feed.channel.title}》{rss_url} 訂閱成功")
-    else:
+    content = await provider.fetch_timeout(rss_url)
+    try:
+        if content.version != "":
+            await db.add_subscribe(interaction.guild_id, interaction.channel_id, rss_url)
+            await interaction.response.send_message(f"《{content.feed.title}》{rss_url} 訂閱成功")
+        else:
+            await interaction.response.send_message(f"{rss_url} 訂閱失敗")
+    except AttributeError:
         await interaction.response.send_message(f"{rss_url} 訂閱失敗")
 
 
