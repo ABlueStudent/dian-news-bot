@@ -43,7 +43,13 @@ class CustomBot(discord.Client):
             content = await provider.fetch_timeout(feed)
             cached = (await db.get_feed_cache(feed)).fetchone()
 
-            if content == None: continue
+            if content == None:
+                continue
+            try:
+                if content.version == "":
+                    continue
+            except AttributeError:
+                continue
 
             if cached is None:
                 new = content.entries[0]
