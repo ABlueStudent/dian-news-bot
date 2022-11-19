@@ -43,6 +43,8 @@ class CustomBot(discord.Client):
             content = await provider.fetch_timeout(feed)
             cached = (await db.get_feed_cache(feed)).fetchone()
 
+            if content == None: continue
+
             if cached is None:
                 new = content.entries[0]
                 await db.set_feed_cache(feed, new.title, new.published, new.link)
