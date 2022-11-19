@@ -11,7 +11,11 @@ async def fetch_rss(url: str):
 
 
 async def fetch_timeout(url: str, timeout=10):
-    return await asyncio.wait_for(fetch_rss(url), timeout=timeout)
+    try:
+        return await asyncio.wait_for(fetch_rss(url), timeout=timeout)
+    except TimeoutError:
+        print(f"{url} fetch timeout!")
+        return # TODO: 我先想想
 
 
 def timeparse(time: str):
