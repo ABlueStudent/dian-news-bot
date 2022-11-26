@@ -7,7 +7,18 @@ import feedparser
 
 
 async def fetch_rss(url: str):
-    return feedparser.parse(url)
+    agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36 Edg/107.0.1418.35"
+    feed = feedparser.parse(
+        url,
+        agent=agent
+    )
+    if feed.status in range(300, 400):
+        feed = feedparser.parse(
+            feed.href,
+            agent=agent
+        )
+
+    return feed
 
 
 async def fetch_timeout(url: str, timeout=10):
@@ -15,7 +26,7 @@ async def fetch_timeout(url: str, timeout=10):
         return await asyncio.wait_for(fetch_rss(url), timeout=timeout)
     except TimeoutError:
         print(f"{url} fetch timeout!")
-        return # TODO: 我先想想
+        return  # TODO: 我先想想
 
 
 def timeparse(time: str):
