@@ -12,7 +12,7 @@ async def fetch_rss(url: str):
         agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36 Edg/107.0.1418.35"
     )
     if feed.status in range(300, 400):
-        return fetch_rss(feed.href)
+        return await fetch_rss(feed.href)
 
     return feed
 
