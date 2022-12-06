@@ -110,13 +110,13 @@ async def sub(interaction: discord.Interaction, rss_url: str):
     """新訂閱"""
     content = await provider.fetch_timeout(rss_url)
     try:
-        if content.version != "":
-            await db.add_subscribe(interaction.guild_id, interaction.channel_id, rss_url)
-            await interaction.response.send_message(f"《{content.feed.title}》{rss_url} 訂閱成功")
-        else:
-            await interaction.response.send_message(f"{rss_url} 訂閱失敗")
-    except AttributeError:
+        if content.version == "":
+            raise ValueError
+    except (AttributeError, ValueError):
         await interaction.response.send_message(f"{rss_url} 訂閱失敗")
+    else:
+        await db.add_subscribe(interaction.guild_id, interaction.channel_id, rss_url)
+        await interaction.response.send_message(f"《{content.feed.title}》{rss_url} 訂閱成功")
 
 
 @client.tree.command()
