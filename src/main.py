@@ -1,5 +1,6 @@
 # pylint: disable=missing-function-docstring, missing-class-docstring, missing-module-docstring
 
+import socket
 import discord
 import provider
 from discord.ext import tasks
@@ -8,6 +9,7 @@ from database import DBControl
 TOKEN = ""
 GUILDs = []
 db = DBControl(":memory:")
+socket.setdefaulttimeout(30)
 
 with open("./config", "r", encoding="utf-8") as file:
     for line in file.readlines():
